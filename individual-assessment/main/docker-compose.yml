@@ -1,0 +1,129 @@
+services:
+    citizen-db:
+        image: mongo:latest
+        container_name: citizen-mongodb
+        ports:
+            - "27019:27017"
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: root
+            MONGO_INITDB_DATABASE: citizen
+            SPRING_DATA_MONGODB_URI: mongodb://root:root@citizen-mongodb:27017/citizen?authSource=admin
+        volumes:
+            - ../data/citizen:/data/db
+        healthcheck:
+            test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 60s
+        networks:
+            - app-network
+
+    provider-db:
+        image: mongo:latest
+        container_name: electricalProvider-mongodb
+        ports:
+            - "27020:27017"  # Host port -> MongoDB default port
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: root
+            MONGO_INITDB_DATABASE: electricalProvider
+            SPRING_DATA_MONGODB_URI: mongodb://root:root@electricalProvider-mongodb:27017/electricalProvider?authSource=admin
+        volumes:
+            - ../data/electricalProvider:/data/db
+        healthcheck:
+            test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 30s
+        networks:
+            - app-network
+
+    smartCity-db:
+        image: mongo:latest
+        container_name: smartCity-mongodb
+        ports:
+            - "27018:27017"
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: root
+            MONGO_INITDB_DATABASE: smartCity
+            SPRING_DATA_MONGODB_URI: mongodb://root:root@smartCity-mongodb:27017/smartCity?authSource=admin
+        volumes:
+            - ../data/smartCity:/data/db
+        healthcheck:
+            test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 60s
+        networks:
+            - app-network
+    apigateway:
+        build:
+            context: ../apiGateway
+        ports:
+            - "8087:8087"
+        environment:
+            - "PROVIDER_URI=http://provider:9087"
+            - "CITY_URI=http://city:9088"
+            - "CITIZEN_URI=http://citizen:9089"
+        depends_on:
+            - citizen
+            - provider
+            - city
+        networks:
+            - app-network
+    citizen:
+        build:
+            context: ../citizen
+        ports:
+            - "9089:9089"
+        environment:
+            - "RABBITMQ_HOST=rabbitmq"
+            - "MONGO_URI=mongodb://root:root@citizen-mongodb:27017/citizen?authSource=admin"
+        depends_on:
+            - rabbitmq
+            - citizen-db
+        networks:
+            - app-network
+    provider:
+        build:
+            context: ../electricalProvider
+        ports:
+            - "9087:9087"
+        environment:
+            - "RABBITMQ_HOST=rabbitmq"
+            - "MONGO_URI=mongodb://root:root@provider-db:27017/electricalProvider"
+        depends_on:
+            - provider-db
+            - rabbitmq
+        networks:
+            - app-network
+    city:
+        build:
+            context: ../smartCity
+        ports:
+            - "9088:9088"
+        environment:
+            - "MONGO_URI=mongodb://root:root@smartCity-db:27017/smartCity"
+        depends_on:
+            - smartCity-db
+        networks:
+            - app-network
+    rabbitmq:
+        image: "rabbitmq:3-management"
+        container_name: "rabbitmq"
+        ports:
+            - "5672:5672" # RabbitMQ port for messaging
+            - "15672:15672" # Management console
+        environment:
+            RABBITMQ_DEFAULT_USER: "guest"
+            RABBITMQ_DEFAULT_PASS: "guest"
+        networks:
+            - app-network
+networks:
+    app-network:
+        driver: bridge
