@@ -3,6 +3,7 @@ package com.example.electricalprovider.controller;
 import com.example.electricalprovider.dto.ElectricalProviderUpdateDTO;
 import com.example.electricalprovider.models.ElectricalProviderModel;
 import com.example.electricalprovider.service.ElectricalProviderService;
+import com.example.electricalprovider.service.SmartMeterService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,6 @@ import java.util.List;
 public class ElectricalProviderInfoController {
 
     private final ElectricalProviderService ElectricalProviderService;
-
     /**
      * Constructor for ElectricalProviderInfoController.
      *
@@ -110,7 +110,7 @@ public class ElectricalProviderInfoController {
         }
     }
 
-    @PostMapping("/sampleRegister")
+    @PostMapping("/generateTestData")
     public ResponseEntity<String> registerSampleProvider(){
         try{
             // Save the provider to the database

@@ -27,8 +27,6 @@ public class SmartMeterService {
 
     private final SmartMeterRepository smartMeterRepository;
 
-    private final UserRepository UserRepository;
-
     private final CitizenClient citizenClient;
 
 
@@ -38,10 +36,9 @@ public class SmartMeterService {
      * @param smartMeterRepository the repository to handle smart meter data
      * @param citizenClient the client to fetch data from the citizen microservice
      */
-    public SmartMeterService(SmartMeterRepository smartMeterRepository, CitizenClient citizenClient,UserRepository UserRepository) {
+    public SmartMeterService(SmartMeterRepository smartMeterRepository, CitizenClient citizenClient) {
         this.smartMeterRepository = smartMeterRepository;
         this.citizenClient = citizenClient;
-        this.UserRepository = UserRepository;
     }
 
 
@@ -202,67 +199,7 @@ public class SmartMeterService {
         }
     }
 
-    public void generateTestData() {
-        List<smartMeterModel> testData = new ArrayList<>();
-        List<UserModel> userData = new ArrayList<>();
-        Random random = new Random();
-        String[] providerIds = {"507f1f77bcf86cd799439010", "507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"};
-        int customersPerProvider = 50;
-        int months = 6;
-        int dataPerMonth = 50;
 
-        for (String providerId : providerIds) {
-            for (int customerIndex = 1; customerIndex <= customersPerProvider; customerIndex++) {
-                String customerId = "customer" + customerIndex;
-                UserModel user = new UserModel();
-                user.setId(UUID.randomUUID().toString());
-                user.setProviderId(providerId);
-                user.setDatabaseNo(random.nextInt(100));
-                user.setName("Customer " + customerIndex);
-                user.setEmail("customer" + customerIndex + "@example.com");
-                user.setPhone("123-456-789" + customerIndex);
-                user.setCity("City" + customerIndex);
-                user.setState("State" + customerIndex);
-                user.setCountry("Country" + customerIndex);
-                user.setPostalCode("PostalCode" + customerIndex);
-                user.setAddress("Address" + customerIndex);
-                userData.add(user);
-
-                for (int month = 0; month < months; month++) {
-                    LocalDateTime startOfMonth = LocalDateTime.now().minusMonths(month).withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
-                    LocalDateTime endOfMonth = startOfMonth.plusMonths(1).minusSeconds(1);
-                    int iterations = (int) Math.ceil((double) dataPerMonth / (customersPerProvider * months));
-                    System.out.println("Generating for provider: " + providerId + " Month: " + startOfMonth.getMonth());
-
-                    for (int i = 0; i < iterations; i++) {
-                        smartMeterModel dataEntry = new smartMeterModel();
-                        dataEntry.setId(UUID.randomUUID().toString());
-                        dataEntry.setProviderId(providerId);
-                        dataEntry.setCustomerId(customerId);
-                        dataEntry.setCurrentConsumption(50 + (150 * random.nextDouble()));
-                        dataEntry.setReadingTimestamp(randomDateTimeBetween(startOfMonth, endOfMonth, random));
-                        dataEntry.setAutomatedEntryMethod(random.nextBoolean());
-                        dataEntry.setAlertFlag(random.nextBoolean());
-                        testData.add(dataEntry);
-                    }
-                }
-            }
-        }
-
-        System.out.println("Total smart meter entries: " + testData.size());
-        System.out.println("Total user entries: " + userData.size());
-
-        smartMeterRepository.saveAll(testData);
-        UserRepository.saveAll(userData);
-    }
-
-
-    private LocalDateTime randomDateTimeBetween(LocalDateTime start, LocalDateTime end, Random random) {
-        long startEpoch = start.toEpochSecond(ZoneOffset.UTC);
-        long endEpoch = end.toEpochSecond(ZoneOffset.UTC);
-        long randomEpoch = startEpoch + (long) (random.nextDouble() * (endEpoch - startEpoch));
-        return LocalDateTime.ofEpochSecond(randomEpoch, 0, ZoneOffset.UTC);
-    }
 
     /**
      * Summarizes smart meter data for a specific provider.

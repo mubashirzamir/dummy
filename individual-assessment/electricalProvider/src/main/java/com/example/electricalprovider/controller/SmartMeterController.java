@@ -34,16 +34,7 @@ public class SmartMeterController {
 
     private static final Logger logger = LoggerFactory.getLogger(SmartMeterController.class);
 
-    @PostMapping("/generateTestData")
-    public ResponseEntity<String> generateTestData() {
-        try {
-            smartMeterService.generateTestData();
-            return ResponseEntity.ok("Test data generated successfully");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred. Please try again later.");
-        }
-    }
+
     /**
      * Registers a smart meter for a user.
      *
